@@ -1,8 +1,9 @@
-from sqlalchemy import Column, String, Text, Boolean, DateTime, ForeignKey
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.sql import func
-from sqlalchemy.orm import relationship
 import uuid
+
+from sqlalchemy import Boolean, Column, DateTime, ForeignKey, String, Text
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import relationship
+from sqlalchemy.sql import func
 
 
 def generate_uuid():
@@ -20,8 +21,11 @@ class Teacher(Base):
     full_name = Column(String(100), nullable=False)
     subject = Column(String(100), nullable=False)
     password_hash = Column(String(255), nullable=False)
+    role = Column(String(20), default="teacher", nullable=False)
 
-    praise_messages = relationship("PraiseMessage", back_populates="teacher")
+    praise_messages = relationship(
+        "PraiseMessage", back_populates="teacher", cascade="all, delete-orphan"
+    )
 
 
 class PraiseMessage(Base):
@@ -29,7 +33,10 @@ class PraiseMessage(Base):
 
     id = Column(String(36), primary_key=True, default=generate_uuid)
     teacher_id = Column(
-        String(36), ForeignKey("teachers.id"), nullable=False, index=True
+        String(36),
+        ForeignKey("teachers.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
     )
     message = Column(Text, nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
