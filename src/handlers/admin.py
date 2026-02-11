@@ -203,7 +203,7 @@ async def delete_teacher(
         )
 
 
-@router.get("/admin/praises", response_model=List[schemas.PraiseMessage])
+@router.get("/admin/praises", response_model=List[schemas.PraiseMessageDetail])
 async def get_all_praises(
     current_admin: models.Teacher = Depends(get_current_admin),
     db: AsyncSession = Depends(get_db),
@@ -213,12 +213,24 @@ async def get_all_praises(
     """Получение всех благодарностей (только для администратора)"""
     try:
         result = await db.execute(
-            select(models.PraiseMessage)
+            select(
+                models.PraiseMessage, models.Teacher.full_name, models.Teacher.subject
+            )
+            .join(models.Teacher, models.PraiseMessage.teacher_id == models.Teacher.id)
             .order_by(models.PraiseMessage.created_at.desc())
             .limit(limit)
             .offset(offset)
         )
-        praises = result.scalars().all()
+        rows = result.all()
+
+        praises = []
+        for row in rows:
+            praise_dict = {
+                **row.PraiseMessage.__dict__,
+                "teacher_full_name": row.full_name,
+                "teacher_subject": row.subject,
+            }
+            praises.append(schemas.PraiseMessageDetail(**praise_dict))
 
         return praises
 
@@ -227,4 +239,42 @@ async def get_all_praises(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Ошибка при получении данных",
+        )
+
+
+@router.delete("/admin/praises/{praise_id}")
+async def delete_praise_message(
+    praise_id: str,
+    current_admin: models.Teacher = Depends(get_current_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """Удаление благодарности (только для администратора)"""
+    try:
+        # Находим сообщение
+        result = await db.execute(
+            select(models.PraiseMessage).where(models.PraiseMessage.id == praise_id)
+        )
+        praise_message = result.scalar_one_or_none()
+
+        if not praise_message:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Сообщение не найдено",
+            )
+
+        # Удаляем сообщение
+        await db.delete(praise_message)
+        await db.commit()
+
+        return {"success": True, "message": "Сообщение удалено"}
+
+    except HTTPException:
+        await db.rollback()
+        raise
+    except SQLAlchemyError as e:
+        await db.rollback()
+        logger.error(f"Ошибка при удалении сообщения: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Ошибка при удалении сообщения",
         )

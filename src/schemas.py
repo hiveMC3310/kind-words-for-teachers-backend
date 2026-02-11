@@ -97,6 +97,14 @@ class PraiseMessage(PraiseMessageBase):
         from_attributes = True
 
 
+class PraiseMessageDetail(PraiseMessage):
+    teacher_full_name: str
+    teacher_subject: str
+
+    class Config:
+        from_attributes = True
+
+
 # Admin schemas
 class AdminStats(BaseModel):
     total_teachers: int
