@@ -41,6 +41,12 @@ class Settings(BaseSettings):
             "subject": "Заместитель директора по УВР",
             "password": "Lin_(g21)#"
         },
+        {
+            "username": "Karelina",
+            "full_name": "Карелина Наталья Александровна",
+            "subject": "Учитель математики, информатики",
+            "password": "Kar_TuP5ul",
+        },
     ]
 
     # Teachers
@@ -128,12 +134,6 @@ class Settings(BaseSettings):
             "full_name": "Иванова Галина Анатольевна",
             "subject": "Учитель истории, обществознания",
             "password": "Iva_Hsrt^M",
-        },
-        {
-            "username": "Karelina",
-            "full_name": "Карелина Наталья Александровна",
-            "subject": "Учитель математики, информатики",
-            "password": "Kar_TuP5ul",
         },
         {
             "username": "Koldashova",
