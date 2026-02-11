@@ -21,7 +21,6 @@ async def init_database():
 
         async with get_db_context() as db:
             # Проверяем существующих преподавателей
-
             result = await db.execute(select(models.Teacher))
             existing_teachers = len(result.scalars().all())
 
@@ -38,35 +37,48 @@ async def init_database():
                     )
                     db.add(teacher)
 
-                await db.commit()
-                logger.info("Тестовые преподаватели созданы успешно")
-            else:
-                logger.info(
-                    f"В базе данных уже есть {existing_teachers} преподавателей"
-                )
+                for admin_data in settings.ADMINS_DATA:
+                    admin = models.Teacher(
+                        username=admin_data["username"],
+                        full_name=admin_data["full_name"],
+                        subject=admin_data["subject"],
+                        password_hash=auth.get_password_hash(admin_data["password"]),
+                        role=ROLE_ADMIN,
+                    )
+                    db.add(admin)
 
-            # Проверяем и создаем администратора
-            admin_result = await db.execute(
-                select(models.Teacher).where(
-                    models.Teacher.username == settings.ADMIN_USERNAME
-                )
-            )
-            admin = admin_result.scalar_one_or_none()
-
-            if not admin:
-                logger.info("Создаем учетную запись администратора...")
-                admin = models.Teacher(
-                    username=settings.ADMIN_USERNAME,
-                    full_name=settings.ADMIN_FULL_NAME,
-                    subject="Директор",
-                    password_hash=auth.get_password_hash(settings.ADMIN_PASSWORD),
-                    role=ROLE_ADMIN,
-                )
-                db.add(admin)
                 await db.commit()
-                logger.info(f"Администратор {admin.full_name} создан успешно")
+                logger.info("Тестовые преподаватели и администраторы созданы успешно")
             else:
-                logger.info("Администратор уже существует")
+                # Проверяем и создаем администраторов, если их нет
+                for admin_data in settings.ADMINS_DATA:
+                    admin_result = await db.execute(
+                        select(models.Teacher).where(
+                            models.Teacher.username == admin_data["username"]
+                        )
+                    )
+                    admin = admin_result.scalar_one_or_none()
+
+                    if not admin:
+                        logger.info(
+                            f"Создаем учетную запись администратора {admin_data['full_name']}..."
+                        )
+                        admin = models.Teacher(
+                            username=admin_data["username"],
+                            full_name=admin_data["full_name"],
+                            subject=admin_data["subject"],
+                            password_hash=auth.get_password_hash(
+                                admin_data["password"]
+                            ),
+                            role=ROLE_ADMIN,
+                        )
+                        db.add(admin)
+                        await db.commit()
+                        logger.info(f"Администратор {admin.full_name} создан успешно")
+                    else:
+                        logger.info(
+                            f"Администратор {admin_data['full_name']} уже существует"
+                        )
 
     except IntegrityError as e:
         logger.error(f"Ошибка целостности данных: {e}")

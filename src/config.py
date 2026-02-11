@@ -1,7 +1,7 @@
 import logging
 from typing import List
 
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
@@ -13,11 +13,6 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
 
-    # Admin
-    ADMIN_USERNAME: str
-    ADMIN_PASSWORD: str
-    ADMIN_FULL_NAME: str
-
     # CORS
     ALLOWED_ORIGIN: str
 
@@ -25,6 +20,28 @@ class Settings(BaseSettings):
     HOST: str = "0.0.0.0"
     PORT: int = 8000
     RELOAD: bool = True
+
+    # Admin
+    ADMINS_DATA: List = [
+        {
+            "username": "Eliseeva",
+            "full_name": "Елисеева Надежда Павловна",
+            "subject": "Директор школы",
+            "password": "Eli_2b85v6"
+        },
+        {
+            "username": "Bolonenko",
+            "full_name": "Болоненко Анастасия Владимировна",
+            "subject": "Заместитель директора по УВР",
+            "password": "Bol_*&^b1"
+        },
+        {
+            "username": "Linkova",
+            "full_name": "Линькова Людмила Александровна",
+            "subject": "Заместитель директора по УВР",
+            "password": "Lin_(g21)#"
+        },
+    ]
 
     # Teachers
     TEACHERS_DATA: List = [
@@ -185,6 +202,12 @@ class Settings(BaseSettings):
             "password": "Lis_7eYeDD",
         },
         {
+            "username": "Loresh",
+            "full_name": "Лореш Екатерина Михайловна",
+            "subject": "Заместитель директора по ВР",
+            "password": "Lor_ayw232",
+        },
+        {
             "username": "Matyushkina",
             "full_name": "Матюшкина Ольга Вячеславовна",
             "subject": "Учитель, руководитель хорового коллектива",
@@ -312,9 +335,9 @@ class Settings(BaseSettings):
         },
     ]
 
-    class Config:
-        env_file = ".env"
-        case_sensitive = True
+    model_config = SettingsConfigDict(
+        env_file=".env", case_sensitive=True, env_file_encoding="utf-8"
+    )
 
 
 logging.basicConfig(level=logging.INFO)
